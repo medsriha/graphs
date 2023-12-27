@@ -18,17 +18,15 @@ class Graph:
         """       
         for left, right in edges_list:
             if left in self.edges:
-                 self.edges[left].update({right:1.0})
+                 self.edges[left].update({right: 1.0})
             else:
                 self.nodes.add(left)
-                self.edges[left] = {right:1.0}
+                self.edges[left] = {right: 1.0}
             
             if right not in self.edges:
                 self.nodes.add(right)                
-                self.edges[right] ={}
-                
+                self.edges[right] = {}
 
-        
     def get_neighbors(self, node):
         neighbors = set(self.edges[node].keys())
         return neighbors
@@ -63,22 +61,9 @@ class Graph:
         hdist = heapdict.heapdict(dist)                       
 
         while Q:
-            
-            debugdict = self.__dict__
-
-            # get subset of dist dict where key in Q
-#             distQ = { key:value for key,value in dist.items() if key in Q }
-
-            # find key with smallest dist 
             u = hdist.popitem()[0]
-            
-            #remove smallest dist key from set Q
             Q.remove(u)
-            
-            # find neighbors of u
             neighbors = self.get_neighbors(u)
-            
-            # filter for neighbors in Q
             neighbors = neighbors.intersection(Q)
 
             for neighbor in neighbors:
@@ -90,29 +75,28 @@ class Graph:
 
         return dist, path
 
-        
     def adjacency_matrix(self):
         """ Compute an adjacency matrix form of the graph.  
         
         Returns: tuple (A, nodes)
-            A: a sparse matrix in COO form that represents the adjaency matrix
+            A: a sparse matrix in COO form that represents the adjacency matrix
                for the graph (i.e., A[j,i] = 1 iff there is an edge i->j)
                NOTE: be sure you have this ordering correct!
             nodes: a list of nodes indicating the node key corresponding to each
                    index of the A matrix
         """
         nodes = list(self.nodes)
-        nodeIndexDict = {node:i for i,node in enumerate(nodes)}
-        col  = np.array([nodeIndexDict[src_key] for src_key, valdict in self.edges.iteritems() for trgt_key in valdict.iterkeys()])
-        row  = np.array([nodeIndexDict[trgt_key] for src_key, valdict in self.edges.iteritems() for trgt_key in valdict.iterkeys()])
+        nodeIndexDict = {node: i for i, node in enumerate(nodes)}
+        col = np.array([nodeIndexDict[src_key] for src_key, valdict in self.edges.items() for trgt_key in valdict.keys()])
+        row = np.array([nodeIndexDict[trgt_key] for src_key, valdict in self.edges.items() for trgt_key in valdict.keys()])
 
         data = np.ones(len(row), dtype=np.int)
         
-        A = sp.coo_matrix((data, (row,col)))
+        A = sp.coo_matrix((data, (row, col)))
         
         self.A = A
         self.nlist = nodes
-        return (A, nodes)
+        return A, nodes
     
     def pagerank(self, d=0.85, iters=100):
         """ Compute the PageRank score for each node in the network.
@@ -129,20 +113,17 @@ class Graph:
         
         """
         A, nlist = self.adjacency_matrix()
-        
         sumA = np.array(A.sum(axis=0))[0]
-        
-        invSumA = 1.0/sumA
-        
+        invSumA = 1.0 / sumA
         xpd_invSumA = np.array([invSumA[col] for col in A.col])
-        A.data = A.data*xpd_invSumA*d
-        
+        A.data = A.data * xpd_invSumA * d
+
         # intialize ranks to uniform dist
-        rank = np.array([1.0/len(nlist)]*len(nlist))
+        rank = np.array([1.0 / len(nlist)] * len(nlist))
 
         for i in range(iters):
-            rank = A.dot(rank) + (1-d)*1.0/len(nlist)
-        
-        rank = rank/sum(rank)
-        ranks = dict(zip(nlist,rank))
+            rank = A.dot(rank) + (1 - d) * 1.0 / len(nlist)
+
+        rank = rank / sum(rank)
+        ranks = dict(zip(nlist, rank))
         return ranks
